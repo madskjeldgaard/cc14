@@ -6,6 +6,8 @@
 
 See the help file for information about the functionality and use of this extension.
 
+As an alternative to this quark, you could use the 14 bit midi functionality in [The Modality Toolkit](https://github.com/ModalityTeam/Modality-toolkit).
+
 ### Installation
 
 Open up SuperCollider and evaluate the following line of code:
