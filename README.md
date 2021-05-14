@@ -8,6 +8,9 @@ See the help file for information about the functionality and use of this extens
 
 As an alternative to this quark, you could use the 14 bit midi functionality in [The Modality Toolkit](https://github.com/ModalityTeam/Modality-toolkit).
 
+If you don't have a 14 bit midi controller, I recommend building one yourself (the easiest way would probably be to use the Teensy microcontrollers since they have great usb midi support).
+
+
 ### Installation
 
 Open up SuperCollider and evaluate the following line of code:
