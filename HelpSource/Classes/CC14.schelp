@@ -1,0 +1,102 @@
+TITLE:: CC14
+summary:: 14 bit midi functionality and helper functions
+categories:: Midi
+related:: Classes/MIDIdef, Classes/MIDIFunc
+
+DESCRIPTION::
+This class represents a responder for a 14 bit midi signal.
+
+A 14 bit midi signal is comprised of two 7 bit midi cc signals. These two cc numbers are combined to create a 14 bit number which is why this class takes two CC numbers, as opposed to the singular CC number of a 7 bit responder.
+
+This responder also features a couple of nice side effects: 
+
+It is possible to register a single function in the responder or a collection of functions. The latter is useful if you want to easily create different responders for one 14 bit midi cc value, either using it for different things or creating different transformations of the incoming signal.
+
+A built in pattern is available as well by calling the CODE::.pattern:: method.
+
+Optionally, you can choose to transform the raw midi data to a normalized value in the range of 0.0 to 1.0.
+
+CLASSMETHODS::
+
+METHOD:: new
+
+ARGUMENT::label 
+A name for the responder
+
+ARGUMENT::cc1  
+Lower midi cc number
+
+ARGUMENT::cc2  
+Upper midi cc number
+
+ARGUMENT::chan 
+Midi channel
+
+ARGUMENT::fix
+If set to false, the responder will stop responding when the user causes a hard stop. 
+
+ARGUMENT::normalizeValues
+Setting this to true transforms all values passed to the responder function to the range 0.0 to 1.0, if set to false it will be the raw 14 bit value in the range 0 to 16383.
+
+returns:: a CC14
+
+INSTANCEMETHODS::
+
+METHOD:: func
+
+Sets the responder function - a function which is passed CODE::|val, chan, cc1, cc2|:: as arguments.
+
+The function may be either a single function or a collection of functions. If the latter, all the functions in the collection are called each time data flows into the responder. The latter is useful for creating derivations and transformations of the midi value.
+
+ARGUMENT:: inFunction
+
+METHOD:: pattern
+This returns a pattern (a Pdefn) which contains the normal value of the responder (0.0 to 1.0 if normalized, 0 to 16383 if not).
+
+returns:: a Pdefn
+
+EXAMPLES::
+
+code::
+// Connect midi device
+MIDIIn.connectAll;
+
+// Create responder
+(
+c = CC14.new(
+	\slider, 
+	cc1: 0, 
+	cc2: 32, 
+	chan: 0, 
+	fix: true, 
+	normalizeValues: true
+);
+)
+
+// Register a singular responder function that simply posts everything
+(
+c.func_({|val, chan, cc1, cc2| 
+	"Received value: %, cc1: %, cc2: %, chan: %".format(val, cc1, cc2, chan).postln;
+})
+)
+
+// Register a collection of responder functions: One which posts the normal value, and one which posts the inverse
+(
+var responders = [
+	// Normal
+	{|val, chan, cc1, cc2| 
+		val.postln;
+	}, 
+	// Inverse
+	{|val, chan, cc1, cc2| 
+		val = 1.0 - val;
+		val.postln;
+	}
+];
+
+c.func_(responders);
+)
+
+// Use the responder's pattern functionality to set the scale degree of a pattern
+Pbind(\degree, c.pattern * 10).play;
+::

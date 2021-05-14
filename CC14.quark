@@ -1,0 +1,11 @@
+(
+  name: "CC14",
+  summary: "14 bit midi functionality and helper functions",
+  version: "0.001",
+  schelp: "CC14.schelp",
+  dependencies: ,
+  license: "GNU GPL v3.0",
+  copyright: "madskjeldgaard",
+  ext_dependency: "",
+  url: "https://github.com/madskjeldgaard/cc14"
+)
