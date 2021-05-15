@@ -1,6 +1,5 @@
 // Based on Carl Testa's FourteenBitCC class
 CC14 {
-	var <label;
 	var <cc1;
 	var <cc2;
 	var <chan;
@@ -15,21 +14,20 @@ CC14 {
 	var function;
 	var functionKind;
 
-	*new {arg label, cc1 , cc2 , chan, fix=true, normalizeValues=true;
-		^super.new.init(label, cc1, cc2, chan, fix, normalizeValues)
+	*new {arg cc1 , cc2 , chan, fix=true, normalizeValues=true;
+		^super.new.init(cc1, cc2, chan, fix, normalizeValues)
 	}
 
-	init { arg aLabel, aCc1, aCc2, aChan, fix, normalizeValues;
+	init { arg aCc1, aCc2, aChan, fix, normalizeValues;
 		normValues = normalizeValues;
 		maxValue = 16383;
 
-		label = aLabel;
 		cc1 = aCc1;
 		cc2 = aCc2;
 		chan = aChan;
 
-		pattern = Pdefn(label, 0);
-		def = MIDIdef.cc(label.asSymbol, {
+		pattern = PatternProxy(0);
+		def = MIDIFunc.cc({
 			|val,num,chan,src|
 
 			pattern.source = val;
@@ -107,6 +105,6 @@ CC14 {
 			}
 		);
 		
-		Pdefn(label).source = value;
+		pattern.source = value;
 	}
 }
