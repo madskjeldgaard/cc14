@@ -6,6 +6,6 @@
   dependencies: ,
   license: "GNU GPL v3.0",
   copyright: "madskjeldgaard",
-  ext_dependency: "",
+  ext_dependency: nil,
   url: "https://github.com/madskjeldgaard/cc14"
 )
