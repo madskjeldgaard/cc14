@@ -8,7 +8,7 @@ CC14 {
 	var lsb;
 	var <value;
 	var <pattern;
-	var <maxValue;
+	classvar <maxValue = 16383;
 	var normValues;
 
 	var function;
@@ -18,9 +18,37 @@ CC14 {
 		^super.new.init(cc1, cc2, chan, fix, normalizeValues)
 	}
 
+    remove{
+        def.remove()
+    }
+
+    disable{
+        def.disable()
+    }
+
+    enable{
+        def.enable()
+    }
+
+    permanent_{|bool|
+        def.permanent_(bool)
+
+    }
+
+    free{
+        def.free()
+    }
+
+    fix{
+        def.fix()
+    }
+
+    clear{
+        def.clear()
+    }
+
 	init { arg aCc1, aCc2, aChan, fix, normalizeValues;
 		normValues = normalizeValues;
-		maxValue = 16383;
 
 		cc1 = aCc1;
 		cc2 = aCc2;
@@ -41,7 +69,7 @@ CC14 {
 		if(fix, { def.fix; });
 
 	}
-	
+
 	msbSet { arg byte;
 		msb = byte;
 		this.check;
@@ -67,7 +95,7 @@ CC14 {
 		{ inFunction.isKindOf(Function) } {
 			functionKind = \function;
 			inFunction
-		} 
+		}
 
 		// A collection of functions to evaluate
 		{ inFunction.isKindOf(Collection) } {
@@ -85,26 +113,26 @@ CC14 {
 		value = (msb << 7 + lsb);
 
 		// Scale / Normalize
-		if(normValues, { 
+		if(normValues, {
 			value = value.linlin(
-				0, 
-				maxValue, 
-				0.0, 
+				0,
+				maxValue,
+				0.0,
 				1.0
 			);
 		});
 
-		switch(functionKind, 
+		switch(functionKind,
 			\function, {
 				function.value(value, chan, cc1, cc2);
-			}, 
+			},
 			\collection, {
 				function.do{|funcInCollection|
 					funcInCollection.value(value, chan, cc1, cc2)
 				}
 			}
 		);
-		
+
 		pattern.source = value;
 	}
 }
