@@ -1,21 +1,24 @@
-MIDI14Device{
+AbstractMIDI14Device{
+    var <initialized=false;
     var <cc14;
+    var ccs, chans;
 
     *new{|connectOnInit=true, registerDefaultFunctions=true|
         ^super.new.init(connectOnInit, registerDefaultFunctions)
     }
 
     init{|connectOnInit, registerDefaultFunctions|
+        chans = (0..15);
+        ccs = (0..63);
 
         // Midi responders will be organized in this structure of arrays
-        cc14 = (0..15).collect{|midiChan|
+        cc14 = chans.collect{|midiChan|
             // This is capped at 64 because a 14 bit midi signal takes up two cc's and so only 64 are available
-            (0..63).collect{|ccNum|
+            ccs.collect{|ccNum|
                 (
-                    responder: nil,
+                   responder: nil,
                     name: "cc%".format(ccNum).asSymbol,
-                    normalization: \uni, // May be \uni, \bi or \raw
-                    ease: EaseNone, // May be any of Ease.allSubclasses
+                    normalization: \unipolar, // May be \unipolar, \bipolar or \raw
                 )
             }
         };
@@ -24,18 +27,16 @@ MIDI14Device{
 			this.connect();
 		});
 
-        if(registerDefaultFunctions, {
-            this.setDefaults();
-        })
+        // if(registerDefaultFunctions, {
+        //     this.setDefaults();
+        // })
+        this.setup();
+        initialized = true;
     }
 
-    // Overwrite in subclass
-    setDefaults{
-        cc14.do{|midiChan, midiChanNum|
-            midiChan.do{|cc}
-
-        }
-        addCC14
+    // Device specific setup may be done here
+    setup{
+        "Setting up %".format(this.class).postln;
     }
 
     // Overwrite in subclasses
@@ -43,86 +44,84 @@ MIDI14Device{
         this.subclassResponsibility(thisMethod)
     }
 
-    // A silly little thing that randomizes the easing of all functions
-    // scrambleEase{
-    //     cc14.do{|chan|
-    //         chan.do{|cc|
-    //             if(cc.responder.notNil, {
-    //                 // Choose random ease function
-    //                 cc.ease = Ease.allSubclasses.choose;
-    //                 this.setFunc(cc.channel, cc.ccnum, cc.function, cc.ease, cc.normalization)
-    //             })
-    //         }
-    //     }
-    // }
-
     getCC14{|channel, ccnum|
         ^cc14[channel][ccnum]
     }
 
-    setFunc{|channel, ccnum, function, ease, normalization|
+    disableAll{
+        this.allCC14Do{|cc|
+            cc.responder.disable()
+        }
+    }
+
+    enableAll{
+        this.allCC14Do{|cc|
+            cc.responder.enable()
+        }
+    }
+
+    allCC14Do{|func|
+        cc14.do{|midiChan, chanNum|
+            midiChan.do{|cc, ccNum|
+                func.value(cc, ccNum, chanNum)
+            }
+        }
+    }
+
+    // TODO rewrite normalization to spec
+    setFunc{|channel, ccnum, function, normalization|
         if(cc14[channel][ccnum].responder.isNil, {
             "%: Responder for channel %, cc % does not exist".format(this.class.name, channel, ccnum).error
         }, {
             cc14[channel][ccnum].function = function;
-            // TODO: Ease and normalization not used yet. Needs to be enclosed in function like in CC14.func
             cc14[channel][ccnum].responder.func_({|val, chan, cc1, cc2|
                 // Perform normalization
                 val = switch (normalization,
                     \unipolar, {
-                        var uni = val.linlin(0, CC14.maxValue, 0.0, 1.0);
-
-                        // Perform easing function
-                        ease.value(uni);
+                        val.linlin(0, CC14.maxValue, 0.0, 1.0);
                     },
                     \bipolar, {
-                        var uni = val.linlin(0, CC14.maxValue, 0.0, 1.0);
-
-                        // Perform easing function
-                        uni = ease.value(uni);
-
-                        // Then scale to bipolar
-                        // TODO: This is kind of waste of resources. Needs optimization.
-                        uni.linlin(0.0,1.0,-1.0,1.0)
+                        val.linlin(0, CC14.maxValue, -1.0, 1.0);
                     },
                     \raw, {
                         val
                     }
                 );
 
-                // Now call the user's responder function with the (potentially) scaled and eased value.
+                // Now call the user's responder function with the (potentially) scaled value.
                 function.value(val, chan, cc1, cc2)
             })
         });
     }
 
     // Adds a cc14 responder and sets it's function
-    addCC14{|name, channel, ccnum, function, normalization=\uni, ease(EaseNone)|
+    addCC14{|name, channel, ccnum, function, normalization=\unipolar|
         var dict = cc14[channel][ccnum];
+
+        if(dict.responder.notNil, {
+            dict.responder.disable();
+        });
 
         dict.channel = channel;
         dict.ccnum = ccnum;
         dict.function = function;
 
         dict.name = name ? dict[name];
-        // TODO: Not used yet
         dict.normalization = normalization ? dict[normalization];
-        // TODO: Not used yet
-        dict.ease = ease ? dict[ease];
 
         dict.responder = CC14.new(
             cc1: ccnum,
             cc2: ccnum + 32,
             chan: channel,
             fix: true,
-            normalizeValues: \raw // Handled by the function
+            normalizeValues: false // Handled by the function
         );
 
         this.setFunc(
             channel: channel,
             ccnum: ccnum,
+
             function: function,
-            ease: ease,
             normalization: normalization
         );
 
